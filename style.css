@@ -1,0 +1,222 @@
+body {
+  font-family: sans-serif;
+  background: #1e1e1e;
+  color: #fff;
+  padding: 20px;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.container {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.panel {
+  background: #2a2a2a;
+  padding: 15px;
+  border-radius: 10px;
+  flex: 1 1 30%;
+  min-width: 220px;
+  box-sizing: border-box;
+}
+button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  border: 2px solid transparent; /* Ensure consistent border */
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  display: block;
+  position: relative;
+  box-sizing: border-box; /* Include padding/border in size */
+}
+
+button.activeButton {
+  background: #ff9800 !important;
+  color: #000 !important;
+  border-color: transparent; /* Keep the border consistent */
+}
+
+button.unlocked {
+  background: #4caf50;
+}
+
+button.nextTier {
+  background: #555;
+  cursor: default;
+}
+
+button.nextTier::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 0.8em;
+  white-space: nowrap;
+  display: none;
+  z-index: 10;
+  pointer-events: none;
+}
+
+button.nextTier:hover::after {
+  display: block;
+}
+.level {
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: block;
+}
+#activeActivity {
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-align: center;
+}
+#progressContainer {
+  background: #555;
+  border-radius: 5px;
+  height: 20px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+#progressBar {
+  height: 100%;
+  width: 0%;
+  background: #ff9800;
+}
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  padding: 0;
+  justify-content: flex-start; /* Left-align tabs */
+}
+
+.tab {
+  padding: 5px 10px;
+  background: #555;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 2px solid transparent; /* Set a transparent border to maintain consistency */
+  margin: 0;
+  box-sizing: border-box; /* Ensure border is part of the total size */
+}
+
+.tab.active {
+  background: #ff9800;
+}
+
+.tab.hasAction {
+  border-color: gold; /* Apply the active action border */
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 5px gold;
+  }
+  50% {
+    box-shadow: 0 0 15px gold;
+  }
+  100% {
+    box-shadow: 0 0 5px gold;
+  }
+}
+#journal {
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-line;
+  padding: 5px;
+  background: #1c1c1c;
+  border-radius: 5px;
+  flex-basis: 100%;
+}
+.journal-entry {
+  margin-bottom: 4px;
+}
+.story {
+  color: #9acd32;
+}
+.xp {
+  color: #1e90ff;
+}
+.journal-filters {
+  margin-bottom: 5px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 2px 5px;
+  background: #555;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  flex: 1 1 auto;
+  font-size: 0.9em;
+  max-width: 100px;
+  text-align: center;
+}
+.filter-btn.active {
+  background: #ff9800;
+}
+
+.skill-xp-container {
+  background-color: #333; /* Dark grey for the background */
+  height: 10px;  /* Height of the background bar */
+  border-radius: 5px;  /* Rounded corners */
+  width: 100%;  /* Full width */
+  margin-top: 5px;  /* Spacing above the bar */
+}
+
+.skill-xp-bar {
+  height: 100%;  /* Fill the container */
+  background-color: #ff9800; /* Orange color for progress */
+  border-radius: 5px;  /* Rounded corners for the progress bar */
+}
+
+.skill-xp-tooltip {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 0.8em;
+  white-space: nowrap;
+  display: none;
+  z-index: 10;
+}
+
+.skill-xp-container:hover .skill-xp-tooltip {
+  display: block;
+}
+
+/* Skill Bar Styles */
+.skill-bar-container {
+  margin-top: 10px;
+  background-color: #555;
+  border-radius: 5px;
+  height: 10px; /* Height of the skill bar */
+  width: 100%;
+}
+
+.skill-bar-inner {
+  height: 100%;
+  background-color: #ff9800; /* Same color as progress bar */
+  border-radius: 5px;
+  width: 0%; /* Start with 0% width */
+}
+
