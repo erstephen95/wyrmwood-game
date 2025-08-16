@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wyrdwood - Refactored</title>
+    <style>
+        /* ===== CORE LAYOUT ===== */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: #1e1e1e;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: auto;
+        }
+
+        /* ===== HEADER SECTION ===== */
+        .header {
+            flex-shrink: 0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0 0 20px 0;
+            position: relative;
+        }
+
+        .info-button {
+            position: absolute;
+            top: 0;
+            right: 20px;
+            background: #555;
+            color: white;
+            border: 2px solid #777;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .info-button:hover {
+            background: #ff9800;
+            border-color: #ff9800;
+            color: #000;
+        }
+
+        .activity-status {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .progress-container {
+            background: #333;
+            border-radius: 5px;
+            height: 20px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: #ff9800;
+            transition: width 0.1s ease;
+        }
+
+        /* ===== MAIN GAME AREA ===== */
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .panels-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 20px;
+        }
+
+        .top-section {
+            display: flex;
+            gap: 20px;
+            flex-shrink: 0;
+            min-height: 150px;
+            max-height: 400px;
+        }
+
+        .bottom-section {
+            flex: 1;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== PANEL COMPONENTS ===== */
+        .panel {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            margin: 0 0 15px 0;
+            flex-shrink: 0;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .top-section .panel {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .bottom-section .panel {
+            flex: 1;
+        }
+
+        /* ===== INTERACTIVE ELEMENTS ===== */
+        .btn {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            display: block;
+            position: relative;
+            background: #555;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover:not(.btn-disabled) {
+            opacity: 0.8;
+        }
+
+        .btn-active {
+            background: #ff9800 !important;
+            color: #000 !important;
+        }
+
+        .btn-unlocked {
+            background: #4caf50;
+        }
+
+        .btn-dangerous {
+            background: #d32f2f;
+            border-color: #b71c1c;
+        }
+
+        .btn-dangerous:hover:not(:disabled) {
+            background: #f44336;
+        }
+
+        .btn-dangerous:disabled {
+            background: #555;
+            border-color: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-disabled {
+            background: #555;
+            cursor: default;
+            position: relative;
+        }
+
+        /* ===== TABS COMPONENT ===== */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .tab {
+            padding: 5px 10px;
+            background: #555;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-active {
+            background: #ff9800;
+        }
+
+        .tab-indicator {
+            border-color: gold;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px gold; }
+            50% { box-shadow: 0 0 15px gold; }
+        }
+
+        /* ===== SKILL PROGRESS BARS ===== */
+        .skill-item {
+            margin-bottom: 15px;
+        }
+
+        .skill-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .skill-progress {
+            background: #333;
+            height: 20px;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden; /* Match main progress bar style */
+            margin: 5px 0;
+        }
+
+        .skill-progress-bar {
+            height: 100%; /* Full height like main progress bar */
+            background: #4caf50; /* Green color matching btn-unlocked */
+            border-radius: 5px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        /* ===== UNIFIED TOOLTIP STYLES ===== */
+        .custom-tooltip {
+            position: fixed;
+            background: #333;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            white-space: normal;
+            max-width: 250px;
+            text-align: center;
+            line-height: 1.3;
+            display: none;
+            z-index: 1000;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 1px solid #555;
+        }
+
+        /* ===== JOURNAL COMPONENT ===== */
+        .journal-filters {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .filter-btn {
+            padding: 5px 10px;
+            background: #555;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            flex: 1;
+            font-size: 0.9em;
+            max-width: 100px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            opacity: 0.8;
+        }
+
+        .filter-btn-inactive {
+            background: #555 !important;
+            color: #999 !important;
+        }
+
+        /* Color coding for active filter buttons */
+        .filter-btn[data-filter="story"]:not(.filter-btn-inactive) {
+            background: #9acd32;
+            color: #000;
+        }
+
+        .filter-btn[data-filter="unlock"]:not(.filter-btn-inactive) {
+            background: #ff9800;
+            color: #000;
+        }
+
+        .filter-btn[data-filter="level"]:not(.filter-btn-inactive) {
+            background: #ffd700;
+            color: #000;
+        }
+
+        .filter-btn[data-filter="action"]:not(.filter-btn-inactive) {
+            background: #1e90ff;
+            color: #fff;
+        }
+
+        .journal-content {
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-line;
+            padding: 10px;
+            background: #1c1c1c;
+            border-radius: 5px;
+            min-height: 0;
+            height: 0;
+        }
+
+        .journal-entry {
+            margin-bottom: 4px;
+        }
+
+        .entry-story {
+            color: #9acd32;
+        }
+
+        .entry-action {
+            color: #1e90ff;
+        }
+        
+        .entry-level {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        .entry-unlock {
+            color: #ff9800;
+            font-weight: bold;
+        }
+
+        /* ===== MODAL COMPONENTS ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-content {
+            background: #2a2a2a;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            color: white;
+            position: absolute;
+            left: 50%;
+            top: 10%;
+            transform: translateX(-50%);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            user-select: none;
+        }
+
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #ff9800;
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            color: #ff9800;
+        }
+
+        /* ===== CONFIRM DIALOG ===== */
+        .confirm-dialog {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .confirm-content {
+            background: #2a2a2a;
+            margin: 15% auto;
+            padding: 25px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 450px;
+            color: white;
+            text-align: center;
+            border: 3px solid #d32f2f;
+            position: absolute;
+            left: 50%;
+            top: 15%;
+            transform: translateX(-50%);
+            user-select: none;
+        }
+
+        .confirm-content h3 {
+            color: #f44336;
+            margin-top: 0;
+        }
+
+        .confirm-input {
+            margin: 20px 0;
+        }
+
+        .confirm-input input {
+            background: #1e1e1e;
+            border: 2px solid #555;
+            border-radius: 5px;
+            color: white;
+            padding: 10px;
+            font-size: 16px;
+            text-align: center;
+            width: 120px;
+        }
+
+        .confirm-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .confirm-buttons .btn {
+            width: auto;
+            padding: 10px 20px;
+            margin: 0;
+            font-weight: bold;
+        }
+
+        /* ===== RESPONSIVE BREAKPOINTS ===== */
+        
+        /* Medium screens: 2x2 grid */
+        @media (max-width: 900px) {
+            body {
+                height: 100vh;
+            }
+
+            .game-container {
+                overflow: hidden;
+            }
+
+            .panels-layout {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 1fr 1fr;
+                gap: 20px;
+                max-height: 100%;
+                overflow: hidden;
+            }
+
+            .top-section {
+                display: contents;
+            }
+
+            .bottom-section {
+                display: contents;
+            }
+
+            .panel {
+                max-height: 100%;
+            }
+
+            .panel-content {
+                max-height: 100%;
+            }
+
+            .journal-content {
+                max-height: 100%;
+            }
+
+            #skills-panel { grid-area: 1 / 1; }
+            #resources-panel { grid-area: 1 / 2; }
+            #actions-panel { grid-area: 2 / 1; }
+            #journal-panel { grid-area: 2 / 2; }
+        }
+
+        /* Small screens: vertical stack */
+        @media (max-width: 600px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .game-container {
+                overflow: visible;
+                flex: none;
+            }
+
+            .panels-layout {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                height: auto;
+            }
+
+            .top-section {
+                display: contents;
+            }
+
+            .bottom-section {
+                display: contents;
+            }
+
+            .panel {
+                max-height: none;
+            }
+
+            .panel:not(#journal-panel) {
+                flex: 0 0 auto;
+            }
+
+            #journal-panel {
+                flex: 0 0 250px;
+                min-height: 250px;
+            }
+
+            .panel-content {
+                max-height: none;
+            }
+
+            .journal-content {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <h1>Wyrdwood
+            <button class="info-button" id="info-btn" title="About Wyrdwood">?</button>
+        </h1>
+        <div class="activity-status" id="activity-status">ACTIVE ACTIVITY: None</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+    </header>
+
+    <!-- Main Game Area -->
+    <main class="game-container">
+        <div class="panels-layout">
+            <section class="top-section">
+                <!-- Skills Panel -->
+                <div class="panel" id="skills-panel">
+                    <h2 class="panel-header">Skills</h2>
+                    <div class="panel-content" id="skills-content"></div>
+                </div>
+
+                <!-- Resources Panel -->
+                <div class="panel" id="resources-panel">
+                    <h2 class="panel-header">Resources</h2>
+                    <div class="panel-content" id="resources-content"></div>
+                </div>
+
+                <!-- Actions Panel -->
+                <div class="panel" id="actions-panel">
+                    <h2 class="panel-header">Actions</h2>
+                    <div class="tabs" id="action-tabs">
+                        <div class="tab tab-active" data-tab="woodcutting">Woodcutting</div>
+                        <div class="tab" data-tab="mining">Mining</div>
+                        <div class="tab" data-tab="combat">Combat</div>
+                        <div class="tab" data-tab="reset">Reset</div>
+                    </div>
+                    <div class="panel-content" id="actions-content"></div>
+                </div>
+            </section>
+
+            <section class="bottom-section">
+                <!-- Journal Panel -->
+                <div class="panel" id="journal-panel">
+                    <h2 class="panel-header">Journal</h2>
+                    <div class="journal-filters">
+                        <button class="filter-btn" data-filter="story">Story</button>
+                        <button class="filter-btn" data-filter="unlock">Unlocks</button>
+                        <button class="filter-btn" data-filter="level">Levels</button>
+                        <button class="filter-btn" data-filter="action">Actions</button>
+                    </div>
+                    <div class="journal-content" id="journal-content">Your adventure begins...</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- About Modal -->
+    <div id="about-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" id="modal-close">&times;</span>
+            <h3>About Wyrdwood</h3>
+            <p><strong>Wyrdwood is currently in pre-alpha!</strong></p>
+            <p><strong>Designed by Eric Stephen</strong></p>
+            <p><strong>To-do (in rough priority order):</strong></p>
+            <ul>
+                <li>Add visual alerts for important events (level ups, unlocks, etc.)</li>
+                <li>Add sound effects with mute button</li>
+                <li>Implement random events system</li>
+                <li>Create crafting system for combining resources</li>
+                <li>Add equipment system with stat bonuses</li>
+                <li>Revamp combat with health, damage, and loot drops</li>
+                <li>Add day/night and seasonal cycles with varying bonuses</li>
+                <li>Implement resource trading with NPC merchants</li>
+                <li>Add offline progress calculation (24 hour maximum)</li>
+                <li>Do lots of testing and make sure everything works</li>
+                <li>Start using version control properly</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Confirm Dialog -->
+    <div id="confirm-dialog" class="confirm-dialog">
+        <div class="confirm-content" id="confirm-content">
+            <span class="modal-close" id="confirm-close">&times;</span>
+            <h3>Reset Progress</h3>
+            <p><strong>Are you really sure you want to delete all your progress?</strong></p>
+            <p>This will permanently erase all your data!</p>
+            <div class="confirm-input">
+                <label for="confirm-input">Type "DELETE" to confirm:</label>
+                <input type="text" id="confirm-input" placeholder="DELETE">
+            </div>
+            <div class="confirm-buttons">
+                <button id="confirm-yes" class="btn btn-dangerous" disabled>Delete Everything</button>
+                <button id="confirm-no" class="btn btn-unlocked">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+
+        // ===== CONFIGURATION =====
+        const CONFIG = {
+            XP_PER_ACTION: 10,
+            XP_TO_LEVEL_FORMULA: (xp) => Math.floor(Math.sqrt(xp / 50)) + 1,
+            MAX_PANEL_HEIGHT: 400,
+            MIN_JOURNAL_HEIGHT: 250,
+            DEBOUNCE_DELAY: 100,
+            SAVE_DEBOUNCE_DELAY: 1000
+        };
+
+        // ===== UTILITIES =====
+        class Utils {
+            static formatTimestamp() {
+                const now = new Date();
+                return [now.getHours(), now.getMinutes(), now.getSeconds()]
+                    .map(n => String(n).padStart(2, '0'))
+                    .join(':');
+            }
+
+            static debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            static createElement(tag, className, content) {
+                const element = document.createElement(tag);
+                if (className) element.className = className;
+                if (content) element.textContent = content;
+                return element;
+            }
+        }
+
+        // ===== STORAGE MANAGER =====
+        class StorageManager {
+            static isAvailable() {
+                try {
+                    const test = '__storage_test__';
+                    localStorage.setItem(test, test);
+                    localStorage.removeItem(test);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            static save(gameState, journal) {
+                if (!this.isAvailable()) return;
+                
+                try {
+                    localStorage.setItem('wyrdwood_game', JSON.stringify({
+                        gameState,
+                        journal: journal.getEntries(),
+                        timestamp: Date.now()
+                    }));
+                } catch (e) {
+                    console.log('Save failed:', e.message);
+                }
+            }
+
+            static load() {
+                if (!this.isAvailable()) return null;
+                
+                try {
+                    const data = localStorage.getItem('wyrdwood_game');
+                    return data ? JSON.parse(data) : null;
+                } catch (e) {
+                    console.log('Load failed:', e.message);
+                    return null;
+                }
+            }
+
+            static clear() {
+                if (!this.isAvailable()) return;
+                try {
+                    localStorage.removeItem('wyrdwood_game');
+                } catch (e) {
+                    console.log('Clear failed:', e.message);
+                }
+            }
+        }
+
+        // ===== GAME DATA MODEL =====
+        class GameData {
+            constructor() {
+                this.skills = {
+                    woodcutting: { name: "Woodcutting", xp: 0, level: 1 },
+                    mining: { name: "Mining", xp: 0, level: 1 },
+                    combat: { name: "Combat", xp: 0, level: 1 }
+                };
+
+                this.resources = {
+                    pine: { name: "Pine", skill: "woodcutting", unlockLevel: 1, amount: 0, interval: 2000 },
+                    birch: { name: "Birch", skill: "woodcutting", unlockLevel: 10, amount: 0, interval: 2500 },
+                    oak: { name: "Oak", skill: "woodcutting", unlockLevel: 20, amount: 0, interval: 3000 },
+                    ash: { name: "Ash", skill: "woodcutting", unlockLevel: 30, amount: 0, interval: 3500 },
+                    maple: { name: "Maple", skill: "woodcutting", unlockLevel: 40, amount: 0, interval: 4000 },
+                    teak: { name: "Teak", skill: "woodcutting", unlockLevel: 50, amount: 0, interval: 4500 },
+                    walnut: { name: "Walnut", skill: "woodcutting", unlockLevel: 60, amount: 0, interval: 5000 },
+                    yew: { name: "Yew", skill: "woodcutting", unlockLevel: 70, amount: 0, interval: 5500 },
+                    ebony: { name: "Ebony", skill: "woodcutting", unlockLevel: 80, amount: 0, interval: 6000 },
+                    mahogany: { name: "Mahogany", skill: "woodcutting", unlockLevel: 90, amount: 0, interval: 6500 },
+                    dragonwood: { name: "Dragonwood", skill: "woodcutting", unlockLevel: 99, amount: 0, interval: 7000 },
+                    stone: { name: "Stone", skill: "mining", unlockLevel: 1, amount: 0, interval: 2000 },
+                    iron: { name: "Iron", skill: "mining", unlockLevel: 2, amount: 0, interval: 2500 },
+                    goblin: { name: "Goblin", skill: "combat", unlockLevel: 1, interval: 2000 },
+                    wolf: { name: "Wolf", skill: "combat", unlockLevel: 2, interval: 2500 }
+                };
+
+                this.activeAction = null;
+                this.activeTab = "woodcutting";
+                // All filters are active by default
+                this.journalFilters = {
+                    story: true,
+                    unlock: true,
+                    level: true,
+                    action: true
+                };
+            }
+
+            getResourcesBySkill(skillName) {
+                return Object.entries(this.resources)
+                    .filter(([_, resource]) => resource.skill === skillName)
+                    .map(([key, resource]) => ({ key, ...resource }));
+            }
+
+            isResourceUnlocked(resource) {
+                return this.skills[resource.skill].level >= resource.unlockLevel;
+            }
+
+            addXP(skillName, amount = CONFIG.XP_PER_ACTION) {
+                const skill = this.skills[skillName];
+                const oldLevel = skill.level;
+                
+                // Track which resources were unlocked before XP gain
+                const previouslyUnlocked = Object.entries(this.resources)
+                    .filter(([_, resource]) => resource.skill === skillName)
+                    .filter(([_, resource]) => this.isResourceUnlocked(resource))
+                    .map(([key, _]) => key);
+                
+                skill.xp += amount;
+                skill.level = CONFIG.XP_TO_LEVEL_FORMULA(skill.xp);
+                
+                // Check for level up
+                const levelUpData = {
+                    happened: skill.level > oldLevel,
+                    skill: skill,
+                    oldLevel: oldLevel,
+                    newLevel: skill.level
+                };
+                
+                // Check for newly unlocked resources
+                const newlyUnlocked = [];
+                if (levelUpData.happened) {
+                    Object.entries(this.resources)
+                        .filter(([_, resource]) => resource.skill === skillName)
+                        .filter(([key, resource]) => 
+                            this.isResourceUnlocked(resource) && 
+                            !previouslyUnlocked.includes(key))
+                        .forEach(([_, resource]) => {
+                            newlyUnlocked.push(resource);
+                        });
+                }
+                
+                return { levelUpData, newlyUnlocked };
+            }
+        }
+
+        // ===== JOURNAL SYSTEM =====
+        class Journal {
+            constructor() {
+                this.entries = [{
+                    type: "story",
+                    text: `[${Utils.formatTimestamp()}] Your adventure begins! You reach the edge of a vast forest...`
+                }];
+            }
+
+            add(message, type = 'story') {
+                this.entries.push({
+                    type,
+                    text: `[${Utils.formatTimestamp()}] ${message}`
+                });
+            }
+
+            getEntries() {
+                return this.entries;
+            }
+
+            setEntries(entries) {
+                this.entries = entries;
+            }
+
+            getFilteredEntries(filters) {
+                // Show entries where their type's filter is active
+                return this.entries.filter(entry => filters[entry.type] === true);
+            }
+        }
+
+        // ===== GAME LOOP MANAGER =====
+        class GameLoop {
+            constructor(gameData, journal, ui) {
+                this.gameData = gameData;
+                this.journal = journal;
+                this.ui = ui;
+                this.isRunning = false;
+                this.startTime = 0;
+            }
+
+            start() {
+                if (this.isRunning || !this.gameData.activeAction) return;
+                
+                this.isRunning = true;
+                this.startTime = performance.now();
+                this.loop();
+            }
+
+            stop() {
+                this.isRunning = false;
+                this.ui.updateProgress(0);
+            }
+
+            loop() {
+                if (!this.isRunning || !this.gameData.activeAction) {
+                    this.stop();
+                    return;
+                }
+
+                const elapsed = performance.now() - this.startTime;
+                const duration = this.gameData.activeAction.interval;
+                const progress = elapsed / duration;
+
+                if (progress >= 1) {
+                    this.completeAction();
+                    this.startTime = performance.now();
+                } else {
+                    this.ui.updateProgress(progress * 100);
+                }
+
+                requestAnimationFrame(() => this.loop());
+            }
+
+            completeAction() {
+                const action = this.gameData.activeAction;
+                const skill = this.gameData.skills[action.skill];
+                
+                // Add XP and check for level ups and unlocks
+                const { levelUpData, newlyUnlocked } = this.gameData.addXP(action.skill);
+
+                // Standard action message
+                let message;
+                if (action.amount !== undefined) {
+                    action.amount += 1;
+                    message = `Gained ${CONFIG.XP_PER_ACTION} XP in ${skill.name} and obtained 1 ${action.name}`;
+                } else {
+                    message = `Gained ${CONFIG.XP_PER_ACTION} XP in ${skill.name} and defeated a ${action.name}`;
+                }
+                this.journal.add(message, 'action');
+                
+                // Level up message
+                if (levelUpData.happened) {
+                    const levelMessage = `🎉 ${levelUpData.skill.name} leveled up! Now level ${levelUpData.newLevel}!`;
+                    this.journal.add(levelMessage, 'level');
+                    
+                    // Unlock messages
+                    newlyUnlocked.forEach(resource => {
+                        const actionVerb = this.ui.getActionVerb(resource.skill);
+                        const unlockMessage = `🔓 Unlocked: ${actionVerb} ${resource.name}!`;
+                        this.journal.add(unlockMessage, 'unlock');
+                    });
+                }
+
+                this.ui.render();
+                this.ui.save();
+            }
+        }
+
+        // ===== UI CONTROLLER =====
+        class UIController {
+            constructor(gameData, journal) {
+                this.gameData = gameData;
+                this.journal = journal;
+                this.gameLoop = new GameLoop(gameData, journal, this);
+                
+                this.elements = this.cacheElements();
+                this.debouncedSave = Utils.debounce(() => this.save(), CONFIG.SAVE_DEBOUNCE_DELAY);
+                this.debouncedSyncHeights = Utils.debounce(() => this.syncPanelHeights(), CONFIG.DEBOUNCE_DELAY);
+                
+                this.setupEventListeners();
+                this.load();
+                this.render();
+            }
+
+            cacheElements() {
+                return {
+                    skillsContent: document.getElementById('skills-content'),
+                    resourcesContent: document.getElementById('resources-content'),
+                    actionsContent: document.getElementById('actions-content'),
+                    journalContent: document.getElementById('journal-content'),
+                    activityStatus: document.getElementById('activity-status'),
+                    progressBar: document.getElementById('progress-bar'),
+                    actionTabs: document.getElementById('action-tabs'),
+                    skillsPanel: document.getElementById('skills-panel'),
+                    resourcesPanel: document.getElementById('resources-panel'),
+                    actionsPanel: document.getElementById('actions-panel'),
+                    tabs: document.querySelectorAll('.tab')
+                };
+            }
+
+            setupEventListeners() {
+                // Window resize
+                window.addEventListener('resize', () => this.debouncedSyncHeights());
+
+                // Tab navigation
+                this.elements.actionTabs.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('tab')) {
+                        this.switchTab(e.target.dataset.tab);
+                    }
+                });
+
+                // Journal filters
+                document.querySelector('.journal-filters').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('filter-btn')) {
+                        this.toggleJournalFilter(e.target.dataset.filter);
+                    }
+                });
+
+                // Modal controls
+                document.getElementById('info-btn').addEventListener('click', () => {
+                    document.getElementById('about-modal').style.display = 'block';
+                });
+
+                document.getElementById('modal-close').addEventListener('click', () => {
+                    document.getElementById('about-modal').style.display = 'none';
+                });
+
+                // Confirm dialog controls
+                document.getElementById('confirm-close').addEventListener('click', () => {
+                    document.getElementById('confirm-dialog').style.display = 'none';
+                });
+
+                // Confirm dialog
+                const confirmInput = document.getElementById('confirm-input');
+                const confirmYes = document.getElementById('confirm-yes');
+                
+                confirmInput.addEventListener('input', (e) => {
+                    confirmYes.disabled = e.target.value.toLowerCase() !== 'delete';
+                });
+
+                confirmYes.addEventListener('click', () => this.resetGame());
+                document.getElementById('confirm-no').addEventListener('click', () => {
+                    document.getElementById('confirm-dialog').style.display = 'none';
+                });
+
+                // Click outside modal closes it
+                window.addEventListener('click', (e) => {
+                    const aboutModal = document.getElementById('about-modal');
+                    const confirmDialog = document.getElementById('confirm-dialog');
+                    
+                    if (e.target === aboutModal) aboutModal.style.display = 'none';
+                    if (e.target === confirmDialog) confirmDialog.style.display = 'none';
+                });
+
+                // Setup dragging for modals
+                this.setupModalDragging();
+
+                // Setup custom tooltip system
+                this.setupCustomTooltips();
+            }
+
+            setupCustomTooltips() {
+                // Create a tooltip element
+                this.customTooltip = Utils.createElement('div', 'custom-tooltip');
+                document.body.appendChild(this.customTooltip);
+
+                // Track mouse movement for positioning
+                this.mouseX = 0;
+                this.mouseY = 0;
+                
+                document.addEventListener('mousemove', (e) => {
+                    this.mouseX = e.clientX;
+                    this.mouseY = e.clientY;
+                    
+                    if (this.customTooltip.style.display === 'block') {
+                        this.positionTooltip();
+                    }
+                });
+            }
+
+            positionTooltip() {
+                // Simple positioning above and to the right of mouse
+                let x = this.mouseX + 15;
+                let y = this.mouseY - 50;
+
+                // Keep within window bounds
+                const tooltipRect = this.customTooltip.getBoundingClientRect();
+                
+                if (x + tooltipRect.width > window.innerWidth) {
+                    x = this.mouseX - tooltipRect.width - 15;
+                }
+                if (y < 0) {
+                    y = this.mouseY + 20;
+                }
+
+                this.customTooltip.style.left = x + 'px';
+                this.customTooltip.style.top = y + 'px';
+            }
+
+            showTooltip(element, text) {
+                this.customTooltip.textContent = text;
+                this.customTooltip.style.display = 'block';
+                // Position after making visible so we get correct dimensions
+                setTimeout(() => this.positionTooltip(), 0);
+            }
+
+            hideTooltip() {
+                this.customTooltip.style.display = 'none';
+            }
+
+            setupModalDragging() {
+                const modalContent = document.querySelector('.modal-content');
+                const confirmContent = document.getElementById('confirm-content');
+
+                this.makeDraggable(modalContent);
+                this.makeDraggable(confirmContent);
+            }
+
+            makeDraggable(element) {
+                if (!element) return;
+
+                let isDragging = false;
+                let dragStartX, dragStartY;
+                let elementStartX, elementStartY;
+
+                const startDrag = (e) => {
+                    // Don't drag if clicking on interactive elements
+                    if (e.target.classList.contains('modal-close') || 
+                        e.target.tagName === 'INPUT' || 
+                        e.target.tagName === 'BUTTON' ||
+                        e.target.tagName === 'LABEL') {
+                        return;
+                    }
+
+                    isDragging = true;
+                    
+                    // Change cursor to indicate dragging
+                    element.style.cursor = 'grabbing';
+                    document.body.style.cursor = 'grabbing';
+                    
+                    // Get current position
+                    const rect = element.getBoundingClientRect();
+                    elementStartX = rect.left;
+                    elementStartY = rect.top;
+                    
+                    // Record mouse start position
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                    
+                    // Remove centering transform and set explicit position
+                    element.style.transform = 'none';
+                    element.style.left = elementStartX + 'px';
+                    element.style.top = elementStartY + 'px';
+                    element.style.margin = '0';
+                    
+                    // Prevent text selection
+                    document.body.style.userSelect = 'none';
+                    e.preventDefault();
+                };
+
+                const drag = (e) => {
+                    if (!isDragging) return;
+                    
+                    e.preventDefault();
+                    
+                    // Calculate new position
+                    const deltaX = e.clientX - dragStartX;
+                    const deltaY = e.clientY - dragStartY;
+                    
+                    let newX = elementStartX + deltaX;
+                    let newY = elementStartY + deltaY;
+                    
+                    // Constrain to window bounds
+                    const elementRect = element.getBoundingClientRect();
+                    const maxX = window.innerWidth - elementRect.width;
+                    const maxY = window.innerHeight - elementRect.height;
+                    
+                    newX = Math.max(0, Math.min(newX, maxX));
+                    newY = Math.max(0, Math.min(newY, maxY));
+                    
+                    element.style.left = newX + 'px';
+                    element.style.top = newY + 'px';
+                };
+
+                const stopDrag = () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        
+                        // Reset cursors
+                        element.style.cursor = '';
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                    }
+                };
+
+                // Add event listeners
+                element.addEventListener('mousedown', startDrag);
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+                
+                // Handle case where mouse leaves window
+                document.addEventListener('mouseleave', stopDrag);
+            }
+
+            render() {
+                this.renderSkills();
+                this.renderResources();
+                this.renderActions();
+                this.renderJournal();
+                this.updateTabIndicators();
+                this.updateFilterButtons();
+                
+                requestAnimationFrame(() => this.syncPanelHeights());
+            }
+
+            renderSkills() {
+                this.elements.skillsContent.innerHTML = '';
+                
+                Object.values(this.gameData.skills).forEach(skill => {
+                    const container = Utils.createElement('div', 'skill-item');
+                    
+                    const title = Utils.createElement('div', 'skill-title', 
+                        `${skill.name} (Level ${skill.level})`);
+                    
+                    const progressContainer = Utils.createElement('div', 'skill-progress');
+                    
+                    const prevLevelXP = Math.max(0, (skill.level - 1) ** 2 * 50);
+                    const currentLevelXP = skill.level ** 2 * 50;
+                    const progress = Math.min(100, ((skill.xp - prevLevelXP) / (currentLevelXP - prevLevelXP)) * 100);
+                    
+                    const progressBar = Utils.createElement('div', 'skill-progress-bar');
+                    progressBar.style.width = `${progress}%`;
+                    
+                    // Use the custom tooltip system instead of individual tooltip elements
+                    const tooltipText = `${skill.xp}/${currentLevelXP} XP`;
+                    
+                    // Add mouse event listeners for tooltip
+                    container.addEventListener('mouseenter', () => {
+                        this.showTooltip(container, tooltipText);
+                    });
+                    
+                    container.addEventListener('mouseleave', () => {
+                        this.hideTooltip();
+                    });
+                    
+                    progressContainer.appendChild(progressBar);
+                    container.appendChild(title);
+                    container.appendChild(progressContainer);
+                    this.elements.skillsContent.appendChild(container);
+                });
+            }
+
+            renderResources() {
+                this.elements.resourcesContent.innerHTML = '';
+                
+                Object.values(this.gameData.resources)
+                    .filter(resource => resource.skill !== "combat" && resource.amount > 0)
+                    .forEach(resource => {
+                        const element = Utils.createElement('div', '', 
+                            `${resource.name}: ${resource.amount}`);
+                        this.elements.resourcesContent.appendChild(element);
+                    });
+            }
+
+            renderActions() {
+                this.elements.actionsContent.innerHTML = '';
+
+                if (this.gameData.activeTab === "reset") {
+                    this.renderResetButton();
+                    return;
+                }
+
+                const resources = this.gameData.getResourcesBySkill(this.gameData.activeTab);
+                let nextTierShown = false;
+
+                resources.forEach(resource => {
+                    const skill = this.gameData.skills[resource.skill];
+                    
+                    if (skill.level < resource.unlockLevel && nextTierShown) return;
+
+                    const button = Utils.createElement('button', 'btn');
+                    const actionVerb = this.getActionVerb(resource.skill);
+                    button.textContent = `${actionVerb} ${resource.name}`;
+
+                    if (this.gameData.isResourceUnlocked(resource)) {
+                        button.classList.add('btn-unlocked');
+                        button.addEventListener('click', () => this.startAction(resource));
+                    } else if (!nextTierShown) {
+                        button.classList.add('btn-disabled');
+                        
+                        // Create tooltip text
+                        const levelsNeeded = resource.unlockLevel - skill.level;
+                        const targetXP = (resource.unlockLevel - 1) ** 2 * 50;
+                        const xpNeeded = targetXP - skill.xp;
+                        const tooltipText = `Requires ${skill.name} level ${resource.unlockLevel} (${levelsNeeded} more level${levelsNeeded > 1 ? 's' : ''}, ${xpNeeded} XP)`;
+                        
+                        // Add tooltip events
+                        button.addEventListener('mouseenter', () => {
+                            this.showTooltip(button, tooltipText);
+                        });
+                        
+                        button.addEventListener('mouseleave', () => {
+                            this.hideTooltip();
+                        });
+                        
+                        nextTierShown = true;
+                    }
+
+                    this.elements.actionsContent.appendChild(button);
+                });
+
+                this.highlightActiveButton();
+            }
+
+            renderResetButton() {
+                const button = Utils.createElement('button', 'btn btn-dangerous', 'Reset Progress');
+                button.addEventListener('click', () => this.showResetDialog());
+                this.elements.actionsContent.appendChild(button);
+            }
+
+            renderJournal() {
+                this.elements.journalContent.innerHTML = '';
+                
+                this.journal.getFilteredEntries(this.gameData.journalFilters).forEach(entry => {
+                    const element = Utils.createElement('div', `journal-entry entry-${entry.type}`, entry.text);
+                    this.elements.journalContent.appendChild(element);
+                });
+                
+                this.elements.journalContent.scrollTop = this.elements.journalContent.scrollHeight;
+            }
+
+            updateFilterButtons() {
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    const filterType = btn.dataset.filter;
+                    if (this.gameData.journalFilters[filterType]) {
+                        btn.classList.remove('filter-btn-inactive');
+                    } else {
+                        btn.classList.add('filter-btn-inactive');
+                    }
+                });
+            }
+
+            toggleJournalFilter(filterType) {
+                // Toggle the filter state
+                this.gameData.journalFilters[filterType] = !this.gameData.journalFilters[filterType];
+                
+                // Update UI
+                this.updateFilterButtons();
+                this.renderJournal();
+                
+                // Save state
+                this.debouncedSave();
+            }
+
+            syncPanelHeights() {
+                // Only sync in wide mode
+                const topSection = document.querySelector('.top-section');
+                if (window.getComputedStyle(topSection).display !== 'flex') {
+                    this.resetPanelHeights();
+                    return;
+                }
+
+                const panels = [this.elements.skillsPanel, this.elements.resourcesPanel, this.elements.actionsPanel];
+                
+                // Reset heights
+                panels.forEach(panel => panel.style.height = 'auto');
+
+                // Find max height
+                const maxHeight = Math.max(...panels.map(panel => panel.offsetHeight));
+                const finalHeight = Math.min(maxHeight, CONFIG.MAX_PANEL_HEIGHT);
+
+                // Apply synchronized height
+                panels.forEach(panel => panel.style.height = `${finalHeight}px`);
+            }
+
+            resetPanelHeights() {
+                [this.elements.skillsPanel, this.elements.resourcesPanel, this.elements.actionsPanel]
+                    .forEach(panel => panel.style.height = '');
+            }
+
+            getActionVerb(skillName) {
+                const verbs = {
+                    woodcutting: 'Chop',
+                    mining: 'Mine',
+                    combat: 'Fight'
+                };
+                return verbs[skillName] || 'Use';
+            }
+
+            highlightActiveButton() {
+                if (!this.gameData.activeAction) return;
+                
+                const activeButton = Array.from(this.elements.actionsContent.querySelectorAll('.btn'))
+                    .find(btn => btn.textContent.includes(this.gameData.activeAction.name));
+                    
+                if (activeButton) {
+                    activeButton.classList.add('btn-active');
+                }
+            }
+
+            updateTabIndicators() {
+                this.elements.tabs.forEach(tab => {
+                    tab.classList.remove('tab-indicator');
+                    if (this.gameData.activeAction && 
+                        tab.dataset.tab === this.gameData.activeAction.skill && 
+                        tab.dataset.tab !== this.gameData.activeTab) {
+                        tab.classList.add('tab-indicator');
+                    }
+                });
+            }
+
+            switchTab(tabName) {
+                this.elements.tabs.forEach(tab => {
+                    tab.classList.toggle('tab-active', tab.dataset.tab === tabName);
+                });
+                
+                this.gameData.activeTab = tabName;
+                this.renderActions();
+                this.updateTabIndicators();
+            }
+
+            startAction(resource) {
+                // Get the actual resource reference from gameData, not the copy
+                const actualResource = this.gameData.resources[resource.key];
+                
+                if (this.gameData.activeAction === actualResource) {
+                    this.stopAction();
+                    return;
+                }
+
+                this.gameData.activeAction = actualResource;
+                
+                document.querySelectorAll('.btn-active').forEach(btn => 
+                    btn.classList.remove('btn-active'));
+
+                const actionName = this.getActionName(resource);
+                this.elements.activityStatus.textContent = `ACTIVE ACTIVITY: ${actionName} ${resource.name}`;
+                
+                this.renderActions();
+                this.updateTabIndicators();
+                this.gameLoop.start();
+            }
+
+            stopAction() {
+                this.gameData.activeAction = null;
+                this.elements.activityStatus.textContent = "ACTIVE ACTIVITY: None";
+                
+                document.querySelectorAll('.btn-active').forEach(btn => 
+                    btn.classList.remove('btn-active'));
+                
+                this.gameLoop.stop();
+                this.updateTabIndicators();
+            }
+
+            getActionName(resource) {
+                const names = {
+                    woodcutting: 'Chopping',
+                    mining: 'Mining',
+                    combat: 'Fighting'
+                };
+                return names[resource.skill] || 'Using';
+            }
+
+            showResetDialog() {
+                const dialog = document.getElementById('confirm-dialog');
+                const input = document.getElementById('confirm-input');
+                const confirmBtn = document.getElementById('confirm-yes');
+                
+                input.value = '';
+                confirmBtn.disabled = true;
+                dialog.style.display = 'block';
+            }
+
+            resetGame() {
+                StorageManager.clear();
+                location.reload();
+            }
+
+            updateProgress(percentage) {
+                this.elements.progressBar.style.width = `${percentage}%`;
+            }
+
+            save() {
+                StorageManager.save(this.gameData, this.journal);
+            }
+
+            load() {
+                const data = StorageManager.load();
+                if (!data) {
+                    // On fresh start, announce initially available actions
+                    this.journal.add("🔓 Unlocked: Chop Pine!", 'unlock');
+                    this.journal.add("🔓 Unlocked: Mine Stone!", 'unlock');
+                    this.journal.add("🔓 Unlocked: Fight Goblin!", 'unlock');
+                    return;
+                }
+
+                if (data.gameState) {
+                    Object.assign(this.gameData, data.gameState);
+                    // Ensure journalFilters exists for backwards compatibility
+                    if (!this.gameData.journalFilters) {
+                        this.gameData.journalFilters = {
+                            story: true,
+                            unlock: true,
+                            level: true,
+                            action: true
+                        };
+                    }
+                }
+                
+                if (data.journal) {
+                    this.journal.setEntries(data.journal);
+                }
+            }
+        }
+
+        // ===== INITIALIZE GAME =====
+        const game = new UIController(new GameData(), new Journal());
+    </script>
+</body>
+</html>
